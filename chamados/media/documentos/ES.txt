@@ -1,0 +1,11 @@
+ALUNOS: EUGENIO OLIVEIRA, ITAMAR PEREIRA
+1ª questão
+	R:A = 2
+	    B = 1,5
+	    C = 5
+            D = 2,5
+2ª questão
+	R: o limite de implementação é 5, e no quadro existe 6.
+3 ª questão
+	R: desenvolvedor de software para implementar o algoritmo, profissional de UI/UX para ficar responsável com o design e usabilidade do software.
+	O time de desenvolvimento iria ficar responsável para realizar as mudanças necessárias.

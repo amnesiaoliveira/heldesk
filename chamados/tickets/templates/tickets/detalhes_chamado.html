@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Detalhes do Chamado: {{ chamado.titulo }}{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="mb-4">Detalhes do Chamado: {{ chamado.titulo }}</h1>
+    
+    <!-- Informações do Chamado -->
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <p><strong>Descrição:</strong> {{ chamado.descricao|default:"Sem descrição" }}</p>
+            <p><strong>Prioridade:</strong> 
+                <span class="badge {% if chamado.prioridade == 'ALTA' %}bg-danger{% elif chamado.prioridade == 'MEDIA' %}bg-warning{% else %}bg-success{% endif %}">
+                    {{ chamado.prioridade }}
+                </span>
+            </p>
+            <p><strong>Status:</strong> 
+                <span class="badge {% if chamado.status == 'ABERTO' %}bg-primary{% elif chamado.status == 'ANDAMENTO' %}bg-info{% else %}bg-success{% endif %}">
+                    {{ chamado.status }}
+                </span>
+            </p>
+            <p><strong>Criado em:</strong> {{ chamado.criado_em|date:"d/m/Y H:i" }}</p>
+            <p><strong>Por:</strong> {{ chamado.usuario }}</p>
+            <p><strong>Responsável:</strong> {{ chamado.responsavel|default:"Nenhum" }}</p>
+            <a href="{% url 'editar_chamado' chamado.id %}" class="btn btn-outline-primary btn-sm"><i class="fas fa-edit"></i> Editar</a>
+        </div>
+    </div>
+
+    <!-- Conversa -->
+    <h3>Conversa</h3>
+    <div id="chat-container" class="chat-container mb-4" style="max-height: 400px; overflow-y: auto; border: 1px solid var(--text-color); padding: 10px; border-radius: 5px; background-color: var(--content-bg);">
+        {% for atualizacao in chamado.atualizacoes.all %}
+        <div class="chat-message {% if request.user == atualizacao.autor %}text-end{% else %}text-start{% endif %} mb-3">
+            <div class="d-inline-block p-2 rounded {% if request.user == atualizacao.autor %}chat-autor{% else %}chat-outro{% endif %} shadow-sm">
+                <p class="mb-1">{{ atualizacao.texto|default:"" }}</p>
+                {% if atualizacao.documento %}
+                <p><a href="{{ atualizacao.documento.url }}" class="text-decoration-underline" target="_blank">Documento anexado</a></p>
+                {% endif %}
+                <small class="chat-timestamp">Por {{ atualizacao.autor.username }} em {{ atualizacao.criado_em|date:"d/m/Y H:i" }}</small>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted text-center">Nenhuma mensagem ainda.</p>
+        {% endfor %}
+    </div>
+
+    <!-- Formulário de Chat -->
+    <form id="chat-form" class="card p-4 mb-4 shadow-sm" enctype="multipart/form-data" style="background-color: var(--content-bg); color: var(--text-color);">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label for="texto" class="form-label">Nova Mensagem</label>
+            <textarea name="texto" id="texto" class="form-control" rows="3" placeholder="Digite sua mensagem..."></textarea>
+        </div>
+        <div class="mb-3">
+            <label for="documento" class="form-label">Anexar Documento</label>
+            <input type="file" name="documento" id="documento" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Enviar</button>
+    </form>
+
+    <!-- Histórico de Alterações -->
+    <h3>Histórico de Alterações</h3>
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+            {% if historico %}
+            <ul class="list-group list-group-flush">
+                {% for entrada in historico %}
+                <li class="list-group-item">
+                    <strong>{{ entrada.campo|capfirst }}</strong> alterado de 
+                    "<span class="text-muted">{{ entrada.valor_antigo|default:"Nenhum" }}</span>" para 
+                    "<span class="text-success">{{ entrada.valor_novo|default:"Nenhum" }}</span>" 
+                    por {{ entrada.alterado_por.username }} em {{ entrada.alterado_em|date:"d/m/Y H:i" }}
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="text-muted text-center">Nenhuma alteração registrada.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Botão Voltar -->
+    <a href="{% url 'listar_chamados' %}" class="btn btn-secondary mb-3"><i class="fas fa-arrow-left"></i> Voltar</a>
+</div>
+
+<!-- Estilos Adicionais -->
+<style>
+    /* Chat Container */
+    .chat-container {
+        transition: background-color 0.3s, border-color 0.3s;
+    }
+
+    /* Mensagens do Autor */
+    .chat-autor {
+        background-color: #3498db; /* Azul claro no modo claro */
+        color: #ffffff;
+    }
+    [data-theme="dark"] .chat-autor {
+        background-color: #2980b9; /* Azul escuro no modo escuro */
+        color: #ffffff;
+    }
+
+    /* Mensagens de Outros */
+    .chat-outro {
+        background-color: #e9ecef; /* Cinza claro no modo claro */
+        color: var(--text-color);
+    }
+    [data-theme="dark"] .chat-outro {
+        background-color: #34495e; /* Cinza escuro no modo escuro */
+        color: var(--text-color);
+    }
+
+    /* Timestamp */
+    .chat-timestamp {
+        display: block;
+        font-size: 0.8rem;
+        color: #adb5bd; /* Cinza suave no modo claro */
+    }
+    [data-theme="dark"] .chat-timestamp {
+        color: #95a5a6; /* Cinza mais claro no modo escuro */
+    }
+
+    /* Links de Documentos */
+    .chat-message a {
+        color: #ffffff; /* Branco em mensagens do autor */
+    }
+    .chat-outro a {
+        color: var(--bg-hover); /* Azul temático em mensagens de outros */
+    }
+    [data-theme="dark"] .chat-outro a {
+        color: #3498db; /* Azul claro no modo escuro para contraste */
+    }
+
+    /* Formulário */
+    .form-control {
+        background-color: var(--content-bg);
+        color: var(--text-color);
+        border-color: #ced4da;
+    }
+    [data-theme="dark"] .form-control {
+        background-color: #2c3e50;
+        border-color: #4a5e74;
+    }
+    .form-control:focus {
+        border-color: var(--bg-hover);
+        box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+    }
+    [data-theme="dark"] .form-control:focus {
+        box-shadow: 0 0 0 0.2rem rgba(41, 128, 185, 0.25);
+    }
+</style>
+
+<script>
+    const chatSocket = new WebSocket(
+        'ws://' + window.location.host + '/ws/chat/' + {{ chamado.id }} + '/'
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        const chatContainer = document.getElementById('chat-container');
+        const div = document.createElement('div');
+        div.className = `chat-message ${data.is_autor ? 'text-end' : 'text-start'} mb-3`;
+        div.innerHTML = `
+            <div class="d-inline-block p-2 rounded ${data.is_autor ? 'chat-autor' : 'chat-outro'} shadow-sm">
+                <p class="mb-1">${data.texto || ''}</p>
+                ${data.documento_url ? `<p><a href="${data.documento_url}" class="text-decoration-underline" target="_blank">Documento anexado</a></p>` : ''}
+                <small class="chat-timestamp">Por ${data.autor} em ${data.criado_em}</small>
+            </div>
+        `;
+        chatContainer.appendChild(div);
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+
+        if (!data.is_autor && Notification.permission === "granted") {
+            new Notification(`Nova mensagem em: "${"{{ chamado.titulo|escapejs }}"}"`, {
+                body: `${data.autor}: ${data.texto || "Documento anexado"}`,
+            });
+        } else if (!data.is_autor && Notification.permission !== "denied") {
+            Notification.requestPermission();
+        }
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('WebSocket fechado inesperadamente. Tentando reconectar...');
+        setTimeout(() => {
+            location.reload();
+        }, 2000);
+    };
+
+    chatSocket.onerror = function(e) {
+        console.error('Erro no WebSocket:', e);
+    };
+
+    document.getElementById('chat-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const texto = document.getElementById('texto').value.trim();
+        const documentoInput = document.getElementById('documento');
+
+        if (texto && !documentoInput.files.length) {
+            chatSocket.send(JSON.stringify({
+                'texto': texto,
+                'documento_url': ''
+            }));
+            document.getElementById('texto').value = '';
+        }
+
+        if (documentoInput.files.length) {
+            const formData = new FormData(this);
+            fetch("{% url 'detalhes_chamado' chamado.id %}", {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    this.reset();
+                } else {
+                    console.error('Erro ao enviar documento:', response.status);
+                    alert('Erro ao enviar o documento. Tente novamente.');
+                }
+            }).catch(error => {
+                console.error('Erro na requisição:', error);
+                alert('Erro de conexão. Verifique sua internet.');
+            });
+        }
+    });
+</script>
+{% endblock %}

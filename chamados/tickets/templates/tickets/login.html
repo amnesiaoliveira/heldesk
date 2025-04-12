@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load form_tags %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="card shadow-lg mt-5">
+            <div class="card-body p-5">
+                <h2 class="text-center mb-4"><i class="fas fa-lock"></i> Login</h2>
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Usuário</label>
+                        {{ form.username|add_class:"form-control" }}
+                    </div>
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Senha</label>
+                        {{ form.password|add_class:"form-control" }}
+                    </div>
+                    {% if form.errors %}
+                    <div class="alert alert-danger">
+                        Usuário ou senha inválidos.
+                    </div>
+                    {% endif %}
+                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-sign-in-alt"></i> Entrar</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    .btn-primary {
+        background-color: #007bff;
+        border: none;
+    }
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+</style>
+{% endblock %}
